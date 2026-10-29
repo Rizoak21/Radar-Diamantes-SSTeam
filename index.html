@@ -1,0 +1,793 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Radar de Diamantes SSTeam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+/* Layout: una sola columna tipo app de bolsillo — tablero de calor arriba, la jugada sugerida como "sonar" encima, hoja inferior para registrar lo que salió. Look único oscuro de fondo marino, elegido a propósito. */
+:root{
+  --abyss:#06142b; --deep:#0b2244; --panel:#10305c; --line:#1d4a82;
+  --aqua:#38c6f4; --aqua-soft:#9fe3ff; --foam:#eaf7ff; --mist:#8fb2d6;
+  --gold:#ffb81c; --gold-deep:#d97a00; --coral:#ff5a6a; --kelp:#36d39a; --violet:#c46bff;
+  --display:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito',ui-rounded,'Segoe UI',system-ui,sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{background:var(--abyss);color:var(--foam)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:14px 120px;
+  background:radial-gradient(120% 60% at 50% -10%,#123a6e 0%,var(--abyss) 60%) fixed,var(--abyss)}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.5px;margin:0;line-height:1.1;text-wrap:balance}
+h1 span{color:var(--gold)}
+.clan{display:inline-block;font:400 15px/1 var(--display);letter-spacing:2px;color:var(--abyss);background:linear-gradient(#ffd25a,var(--gold));padding:6px 12px 5px;border-radius:8px;margin-bottom:8px;box-shadow:0 3px 0 var(--gold-deep)}
+.sub{color:var(--mist);margin:2px 0 0;font-size:13.5px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.btn{font:800 14px/1 var(--body);border:0;border-radius:999px;padding:11px 16px;cursor:pointer;color:var(--abyss);
+  background:var(--aqua);display:inline-flex;align-items:center;gap:8px;min-height:42px}
+.btn.gold{background:linear-gradient(#ffd25a,var(--gold));color:#3a2100;box-shadow:0 3px 0 var(--gold-deep)}
+.btn.ghost{background:transparent;color:var(--aqua-soft);border:1.5px solid var(--line)}
+.btn:focus-visible,.chip:focus-visible,.cell:focus-visible,.key:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:14px;display:flex;gap:12px;align-items:center;
+  background:color-mix(in srgb,var(--deep) 70%,transparent)}
+.drop.over{border-color:var(--aqua);background:var(--panel)}
+.drop p{margin:0;color:var(--mist);font-size:13.5px;min-width:0;flex:1}
+.drop b{color:var(--foam)}
+.badge{font:900 11px/1 var(--body);letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--violet);color:#1a0630}
+/* sonar: next move */
+.sonar{background:linear-gradient(180deg,var(--panel),var(--deep));border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;gap:8px}
+.sonar .lab{font:900 11px/1 var(--body);letter-spacing:1.2px;text-transform:uppercase;color:var(--aqua-soft)}
+.sonar .move{font-family:var(--display);font-size:26px;line-height:1.1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sonar .move .pct{font-family:var(--body);font-weight:900;font-size:15px;padding:4px 10px;border-radius:999px;background:var(--gold);color:#3a2100}
+.sonar .why{color:var(--mist);margin:0;font-size:14px}
+.tips{display:grid;gap:6px;margin:2px 0 0;padding:0;list-style:none}
+.tips li{display:flex;gap:8px;font-size:13.5px;align-items:flex-start}
+.tips .dot{flex:0 0 10px;height:10px;border-radius:50%;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--deep);border-radius:12px;padding:8px 10px;border:1px solid var(--line)}
+.stat .k{font-size:11px;color:var(--mist);font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+.stat .v{font:900 19px/1.2 var(--body);font-variant-numeric:tabular-nums}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:28px;height:28px;border-radius:8px;border:0;background:var(--panel);color:var(--foam);font:900 16px var(--body);cursor:pointer}
+.stepper input{width:44px;background:transparent;border:0;color:var(--foam);font:900 19px var(--body);text-align:center;font-variant-numeric:tabular-nums}
+/* board */
+.boardbox{position:relative}
+.cols,.rows{font:800 10px/1 var(--body);color:var(--mist);font-variant-numeric:tabular-nums}
+.cols{display:grid;grid-template-columns:repeat(var(--n),1fr);margin-left:22px;margin-bottom:4px;text-align:center}
+.bwrap{display:flex;gap:4px}
+.rows{display:grid;grid-template-rows:repeat(var(--n),1fr);width:18px;text-align:right;align-items:center}
+.board{flex:1;min-width:0;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:3px;padding:6px;border-radius:16px;background:#04101f;border:2px solid var(--aqua);
+  --fs:calc(min(100vw - 70px, 500px) / var(--n))}
+.cell{aspect-ratio:1;border:0;border-radius:7px;position:relative;cursor:pointer;padding:0;display:grid;place-items:center;
+  font:900 calc(var(--fs)*.26)/1 var(--body);color:var(--foam);font-variant-numeric:tabular-nums;background:var(--heat,#1b6fb3);
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.18);transition:transform .08s}
+.cell:active{transform:scale(.94)}
+.cell.open{background:#0f2f5c;box-shadow:none;font:400 calc(var(--fs)*.5)/1 var(--display);text-shadow:0 2px 0 #000}
+.cell.open.z{color:#7d93ad}
+.cell.open.q{color:var(--violet);font-family:var(--body);font-weight:900}
+.cell.dia{background:#0f2f5c;box-shadow:none}
+.cell.dia svg{width:70%;height:70%}
+.cell .xm{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.cell .xm svg{width:62%;height:62%;opacity:.55}
+.cell .pv{position:relative;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.cell.sure{background:var(--gold);color:#3a2100;text-shadow:none}
+.cell.sure .pv{text-shadow:none}
+.cell.safe{background:#1b3c63;color:#6f8fb3}
+.cell.best::after{content:"";position:absolute;inset:-4px;border-radius:10px;border:3px solid var(--violet);animation:ping 1.6s ease-out infinite}
+.cell.warn::before{content:"";position:absolute;top:3px;right:3px;width:22%;height:22%;border-radius:50%;background:var(--coral);z-index:2;border:1.5px solid #04101f}
+.cell.uncertain{outline:2px dashed var(--violet);outline-offset:-3px}
+.cell.err{outline:3px solid var(--coral);outline-offset:-3px}
+@keyframes ping{0%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.25)}}
+@media (prefers-reduced-motion:reduce){.cell.best::after{animation:none}}
+.legend{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mist);flex-wrap:wrap}
+.ramp{height:10px;flex:1;min-width:120px;border-radius:99px;background:linear-gradient(90deg,#1b3c63,#1b6fb3 15%,#2bb3c9 35%,#9fd86b 60%,var(--gold) 85%,#ff9a1c)}
+.shot{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--line);position:relative;background:var(--deep)}
+.shot canvas{display:block;width:100%;height:auto}
+.note{font-size:13px;color:var(--mist);margin:0}
+.alert{background:color-mix(in srgb,var(--coral) 16%,var(--deep));border:1.5px solid var(--coral);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.alert.v{background:color-mix(in srgb,var(--violet) 16%,var(--deep));border-color:var(--violet)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:800 13px/1 var(--body);padding:8px 12px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--foam);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--aqua);color:var(--abyss);border-color:var(--aqua)}
+details{background:var(--deep);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+summary{cursor:pointer;font-weight:900;color:var(--aqua-soft)}
+details ol,details ul{margin:8px 0 2px;padding-left:20px;display:grid;gap:4px;font-size:13.5px;color:var(--foam)}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(2,8,18,.6);z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--panel);border-top:2px solid var(--aqua);border-radius:22px 22px 0 0;
+  padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));max-width:600px;margin:0 auto;display:grid;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.sheet h2 small{font-family:var(--body);font-size:14px;font-weight:900;color:var(--gold)}
+.sheet .q{font-size:13px;color:var(--mist);margin:0}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.key{border:0;border-radius:12px;min-height:50px;background:var(--line);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);color:var(--foam);font:400 24px/1 var(--display);cursor:pointer;text-shadow:0 2px 0 #000}
+.key.dk{grid-column:span 2;background:linear-gradient(#ffd25a,var(--gold));color:#3a2100;text-shadow:none;font:900 15px var(--body);display:flex;align-items:center;justify-content:center;gap:6px}
+.key.dk svg{width:22px}
+.sheet .row .btn{flex:1;justify-content:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(16px + env(safe-area-inset-top,0px));background:var(--foam);color:var(--abyss);font-weight:800;padding:10px 16px;border-radius:999px;z-index:30;font-size:14px;max-width:calc(100% - 32px);text-align:center}
+.busy{display:inline-block;width:14px;height:14px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+/* premios del evento */
+.premios{display:grid;gap:12px}
+.premios h2{font-family:var(--display);font-weight:400;font-size:24px;line-height:1.1;margin:0;text-wrap:balance}
+.premios h2 span{color:var(--gold)}
+.premios .psub{color:var(--mist);margin:0;font-size:13.5px}
+.ptable{overflow-x:auto;border-radius:16px;border:2px solid var(--aqua);background:#04101f}
+.ptable table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ptable th{font:900 11px/1.2 var(--body);letter-spacing:.8px;text-transform:uppercase;color:var(--aqua-soft);text-align:right;padding:11px 12px 9px;background:var(--panel);border-bottom:2px solid var(--line)}
+.ptable th:first-child{text-align:left}
+.ptable td{padding:9px 12px;border-bottom:1px solid #12305a;text-align:right;font-weight:800}
+.ptable td:first-child{text-align:left;font-weight:700}
+.ptable td.qty{color:var(--mist)}
+.ptable tbody tr:nth-child(even) td{background:rgba(29,74,130,.18)}
+.ptable td.ev{color:var(--aqua-soft)}
+.ptable tr.big td.ev{color:var(--gold)}
+.ptable tfoot td{background:linear-gradient(#ffd25a,var(--gold));color:#3a2100;font:900 16px/1.2 var(--body);border:0;padding:12px}
+.ptable tfoot td.tot{font:400 18px/1 var(--display);letter-spacing:.5px;text-align:center}
+.ptable .sm{display:none}
+@media (max-width:520px){.ptable .lg{display:none}.ptable .sm{display:inline}.ptable th,.ptable td{padding:9px 7px}.ptable th{font-size:10.5px;letter-spacing:.5px}.ptable td{font-size:14px}.ptable th:first-child,.ptable td:first-child{padding-left:12px}.ptable th:last-child,.ptable td:last-child{padding-right:12px}.ptable tfoot td.tot{font-size:16px}}
+@media (max-width:380px){.ptable th,.ptable td{padding:8px 4px}.ptable td{font-size:13px}.ptable th{font-size:10px;letter-spacing:.3px}}
+.goal{background:linear-gradient(180deg,var(--panel),var(--deep));border:1.5px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+.goal .glab{font:900 11px/1 var(--body);letter-spacing:1.2px;text-transform:uppercase;color:var(--aqua-soft)}
+.goal h3{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.15;margin:0;text-wrap:balance}
+.goal h3 b{color:var(--gold);font-weight:400}
+.gbars{display:grid;gap:10px}
+.gbar{display:grid;gap:5px}
+.gbar .top{display:flex;justify-content:space-between;gap:10px;font-weight:800;font-size:14px;flex-wrap:wrap}
+.gbar .top span:last-child{font-variant-numeric:tabular-nums}
+.track{height:14px;border-radius:99px;background:#04101f;border:1px solid var(--line);overflow:hidden}
+.fill{height:100%;border-radius:99px}
+.fill.cost{background:var(--coral)}
+.fill.win{background:linear-gradient(90deg,var(--aqua),var(--gold))}
+.net{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px}
+.net .k{color:var(--mist);font-weight:800;font-size:14px}
+.net .v{font:400 26px/1 var(--display);color:var(--kelp);font-variant-numeric:tabular-nums}
+.foot{color:var(--mist);font-size:12px;text-align:center}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="clan">SSTeam</div>
+      <h1>Radar de <span>Diamantes</span></h1>
+      <p class="sub">Sube tu captura y te digo dónde desbloquear.</p>
+    </div>
+  </header>
+
+  <label class="drop" id="drop" for="file">
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="7" width="34" height="26" rx="6" fill="none" stroke="#38c6f4" stroke-width="2.5"/><circle cx="14" cy="17" r="3.5" fill="#ffb81c"/><path d="M6 30l10-9 7 6 5-4 9 7" fill="none" stroke="#38c6f4" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <p><b>Sube o pega una captura</b><br>Toca aquí, arrástrala o pégala. Todo se analiza en tu teléfono.</p>
+    <input type="file" id="file" accept="image/*" hidden>
+  </label>
+
+  <div class="alert v" id="exampleNote">Estás viendo un <b>ejemplo</b>: tu captura del mapa 30 (25/30). Sube la tuya para empezar.</div>
+  <div class="alert" id="errBox" hidden></div>
+  <div class="alert v" id="uncBox" hidden></div>
+
+  <section class="sonar" id="sonar" aria-live="polite">
+    <div class="lab">Próximo movimiento</div>
+    <div class="move" id="move">…</div>
+    <p class="why" id="why"></p>
+    <ul class="tips" id="tips"></ul>
+  </section>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Total</div>
+      <div class="stepper"><button type="button" id="tMinus" aria-label="Restar uno">−</button><input id="total" inputmode="numeric" value="30" aria-label="Total de diamantes del mapa"><button type="button" id="tPlus" aria-label="Sumar uno">+</button></div></div>
+    <div class="stat"><div class="k">Faltan</div><div class="v" id="sLeft">–</div></div>
+    <div class="stat"><div class="k">Sin resolver</div><div class="v" id="sUnk">–</div></div>
+  </div>
+
+  <div class="boardbox">
+    <div class="cols" id="cols"></div>
+    <div class="bwrap"><div class="rows" id="rows"></div><div class="board" id="board" role="grid" aria-label="Tablero"></div></div>
+  </div>
+  <div class="legend"><span>0%</span><div class="ramp" aria-hidden="true"></div><span>100%</span></div>
+  <p class="note">Toca una casilla para anotar lo que salió (diamante o número) o para poner y quitar X. Los porcentajes se recalculan solos.</p>
+
+  <div class="row">
+    <button class="btn ghost" id="undo" type="button" disabled>↶ Deshacer</button>
+    <button class="btn ghost" id="toggleShot" type="button" hidden>Ver captura</button>
+  </div>
+  <div class="shot" id="shot" hidden><canvas id="shotCanvas"></canvas></div>
+
+  <details>
+    <summary>Tamaño del tablero</summary>
+    <p class="note" style="margin-top:8px">Se detecta solo. Si la cuadrícula salió mal, elige el tamaño correcto y vuelvo a leer la captura. Sin captura, empiezas un tablero vacío.</p>
+    <div class="chips" id="sizes" style="margin-top:8px"></div>
+  </details>
+
+  <details>
+    <summary>Cómo leer el radar</summary>
+    <ul>
+      <li>El color y el número de cada casilla tapada es la probabilidad de que tenga diamante.</li>
+      <li><b style="color:var(--gold)">Dorada</b>: diamante seguro, desbloquéala. <b style="color:#6f8fb3">Gris</b> con 0%: vacía segura, márcala con X gratis.</li>
+      <li>Punto <b style="color:var(--coral)">rojo</b>: una X tuya que no está comprobada o que está mal.</li>
+      <li>Borde morado punteado: un número que no pude leer bien. Tócalo para corregirlo.</li>
+      <li>El total se pone solo según el tamaño: 8×8 = 20, 10×10 = 30, 12×12 = 45. Si un mapa trae otro total, cámbialo con − y +.</li>
+      <li>El cálculo usa todos los números y el total de diamantes del mapa. Tus X no cuentan como prueba.</li>
+    </ul>
+  </details>
+  <section class="premios" id="premios">
+    <div>
+      <h2>Premios del <span>evento</span></h2>
+      <p class="psub">Lo que vale cada recompensa en monedas.</p>
+    </div>
+    <div class="ptable">
+      <table>
+        <thead>
+          <tr><th>Ítem</th><th><span class="lg">Cantidad</span><span class="sm">Cant.</span></th><th><span class="lg">Costo normal por unidad</span><span class="sm">Normal c/u</span></th><th><span class="lg">Costo evento</span><span class="sm">Evento</span></th></tr>
+        </thead>
+        <tbody>
+          <tr class="big"><td>Fragmento de chips</td><td class="qty">12</td><td>5,000</td><td class="ev">60,000</td></tr>
+          <tr><td>Llaves coleccionables</td><td class="qty">10</td><td>600</td><td class="ev">6,000</td></tr>
+          <tr><td>Llaves tec</td><td class="qty">10</td><td>600</td><td class="ev">6,000</td></tr>
+          <tr><td>Llaves S</td><td class="qty">10</td><td>600</td><td class="ev">6,000</td></tr>
+          <tr><td>Llaves montura</td><td class="qty">10</td><td>600</td><td class="ev">6,000</td></tr>
+          <tr><td>Frag. S</td><td class="qty">10</td><td>1,000</td><td class="ev">10,000</td></tr>
+          <tr><td>Caja colec</td><td class="qty">1</td><td>13,500</td><td class="ev">13,500</td></tr>
+          <tr><td>Caja mascota</td><td class="qty">1</td><td>18,000</td><td class="ev">18,000</td></tr>
+          <tr><td>Caja tec</td><td class="qty">1</td><td>18,000</td><td class="ev">18,000</td></tr>
+          <tr class="big"><td>Caja S</td><td class="qty">1</td><td>36,000</td><td class="ev">36,000</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3" class="tot">Total monedas</td><td>179,500</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="goal">
+      <div class="glab">¿Vale la pena?</div>
+      <h3>Meta: <b>35 diamantes</b> a 1,500 cada uno</h3>
+      <div class="gbars">
+        <div class="gbar">
+          <div class="top"><span>Gasto mínimo (35 × 1,500)</span><span>52,500</span></div>
+          <div class="track"><div class="fill cost" style="width:29.25%"></div></div>
+        </div>
+        <div class="gbar">
+          <div class="top"><span>Premios del evento</span><span>179,500</span></div>
+          <div class="track"><div class="fill win" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="net"><span class="k">Ganancia mínima</span><span class="v">+127,000</span></div>
+      <p class="note">El gasto mínimo supone que cada casilla que desbloqueas tiene diamante. Cada casilla vacía suma 1,500 más; por eso conviene seguir al Radar.</p>
+    </div>
+  </section>
+
+  <p class="foot">Hecho para el clan SSTeam · Creado con ayuda de Claude (Anthropic)<br>Costos usados: desbloquear 1,500 · verificar 10,000.</p>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <h2><span id="shTitle">F1C1</span><small id="shPct"></small></h2>
+  <p class="q" id="shQ">¿Qué salió al desbloquearla?</p>
+  <div class="pad" id="pad"></div>
+  <div class="row">
+    <button class="btn ghost" id="shX" type="button">Marcar X</button>
+    <button class="btn ghost" id="shCover" type="button">Dejar tapada</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// Solver: board = array N*N of cells: {s:'U'|'D'|'N', n:number, x:bool}
+// returns {p: Float64Array (prob of diamond, NaN for revealed), errors:[], remaining, unknownCount, ok}
+function solveBoard(N, cells, total) {
+  const idx = (r, c) => r * N + c;
+  const nb = new Array(N * N);
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const l = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const rr = r + dr, cc = c + dc;
+      if (rr >= 0 && rr < N && cc >= 0 && cc < N) l.push(idx(rr, cc));
+    }
+    nb[idx(r, c)] = l;
+  }
+  const found = cells.filter(c => c.s === 'D').length;
+  const M = total - found;
+  const errors = [];
+  const p = new Float64Array(N * N).fill(NaN);
+  const covered = [];
+  cells.forEach((c, i) => { if (c.s === 'U') covered.push(i); });
+  // constraints
+  const cons = [];
+  const varCons = new Map();
+  cells.forEach((c, i) => {
+    if (c.s !== 'N') return;
+    let need = c.n, vars = [];
+    for (const j of nb[i]) {
+      if (cells[j].s === 'D') need--;
+      else if (cells[j].s === 'U') vars.push(j);
+    }
+    if (need < 0 || need > vars.length) { errors.push({ cell: i, msg: need < 0 ? 'tiene más diamantes alrededor que su número' : 'no tiene suficientes casillas tapadas alrededor' }); return; }
+    if (!vars.length) return;
+    const k = cons.length;
+    cons.push({ need, vars, cell: i });
+    for (const v of vars) { if (!varCons.has(v)) varCons.set(v, []); varCons.get(v).push(k); }
+  });
+  if (M < 0) errors.push({ cell: -1, msg: 'Hay más diamantes en el tablero que el total del mapa' });
+  if (errors.length) return { p, errors, remaining: M, ok: false };
+
+  const frontier = [...varCons.keys()];
+  const fset = new Set(frontier);
+  const others = covered.filter(i => !fset.has(i));
+  const O = others.length;
+  // components
+  const comp = new Map();
+  const comps = [];
+  for (const v of frontier) {
+    if (comp.has(v)) continue;
+    const list = [], q = [v]; comp.set(v, comps.length);
+    while (q.length) {
+      const a = q.pop(); list.push(a);
+      for (const k of varCons.get(a)) for (const b of cons[k].vars) if (!comp.has(b)) { comp.set(b, comps.length); q.push(b); }
+    }
+    // reorder: walk constraints so each new var touches already-placed ones (better pruning)
+    const ord = [], seen = new Set(), cq = [varCons.get(list[0])[0]], cseen = new Set(cq);
+    while (cq.length) {
+      const k = cq.shift();
+      for (const b of cons[k].vars) if (!seen.has(b)) { seen.add(b); ord.push(b);
+        for (const k2 of varCons.get(b)) if (!cseen.has(k2)) { cseen.add(k2); cq.push(k2); } }
+    }
+    comps.push(ord);
+  }
+  let aborted = false;
+  const LIMIT = 4e6;
+  const compRes = comps.map(vars => {
+    // order: BFS already roughly; sort by first appearance
+    const n = vars.length;
+    const pos = new Map(vars.map((v, i) => [v, i]));
+    const ccons = [...new Set(vars.flatMap(v => varCons.get(v)))].map(k => cons[k]);
+    // for each constraint: list of var positions; track assigned sum and remaining unassigned count
+    const cv = ccons.map(c => c.vars.map(v => pos.get(v)));
+    const varIn = vars.map(() => []);
+    cv.forEach((l, ci) => l.forEach(pi => varIn[pi].push(ci)));
+    const sum = new Int32Array(ccons.length), left = new Int32Array(cv.map(l => l.length));
+    const need = ccons.map(c => c.need);
+    const counts = new Float64Array(n + 1);              // configs by k
+    const vcounts = vars.map(() => new Float64Array(n + 1)); // configs where var is mine, by k
+    const assign = new Int8Array(n);
+    let steps = 0, mines = 0;
+    function rec(i) {
+      if (++steps > LIMIT) { aborted = true; return; }
+      if (aborted) return;
+      if (i === n) {
+        counts[mines]++;
+        for (let j = 0; j < n; j++) if (assign[j]) vcounts[j][mines]++;
+        return;
+      }
+      for (const val of [0, 1]) {
+        let okv = true;
+        for (const ci of varIn[i]) {
+          const s2 = sum[ci] + val, l2 = left[ci] - 1;
+          if (s2 > need[ci] || s2 + l2 < need[ci]) { okv = false; break; }
+        }
+        if (!okv) continue;
+        for (const ci of varIn[i]) { sum[ci] += val; left[ci]--; }
+        assign[i] = val; mines += val;
+        rec(i + 1);
+        mines -= val; assign[i] = 0;
+        for (const ci of varIn[i]) { sum[ci] -= val; left[ci]++; }
+      }
+    }
+    rec(0);
+    return { vars, counts, vcounts };
+  });
+  if (aborted) return approx(N, cells, total, nb, cons, covered, M, p);
+
+  // log binomial
+  const lf = [0]; for (let i = 1; i <= N * N + 1; i++) lf[i] = lf[i - 1] + Math.log(i);
+  const lC = (n, k) => (k < 0 || k > n) ? -Infinity : lf[n] - lf[k] - lf[n - k];
+  const conv = (a, b) => { const r = new Float64Array(a.length + b.length - 1); for (let i = 0; i < a.length; i++) if (a[i]) for (let j = 0; j < b.length; j++) r[i + j] += a[i] * b[j]; return r; };
+  // normalize each comp's counts to avoid overflow
+  compRes.forEach(cr => { const s = cr.counts.reduce((x, y) => x + y, 0); if (s > 0) { for (let k = 0; k < cr.counts.length; k++) cr.counts[k] /= s; cr.vcounts.forEach(v => { for (let k = 0; k < v.length; k++) v[k] /= s; }); } });
+  let all = new Float64Array([1]);
+  for (const cr of compRes) all = conv(all, cr.counts);
+  // weights for total frontier mines K
+  const lw = (K) => lC(O, M - K);
+  let maxl = -Infinity; for (let K = 0; K < all.length; K++) if (all[K] > 0) maxl = Math.max(maxl, lw(K));
+  if (maxl === -Infinity) return { p, errors: [{ cell: -1, msg: 'Los números no cuadran con el total de diamantes. Revisa el total o algún número.' }], remaining: M, ok: false };
+  const W = K => all[K] > 0 ? all[K] * Math.exp(lw(K) - maxl) : 0;
+  let Z = 0, otherMines = 0;
+  for (let K = 0; K < all.length; K++) { const w = W(K); Z += w; otherMines += w * (M - K); }
+  if (Z <= 0) return { p, errors: [{ cell: -1, msg: 'Los números no cuadran con el total de diamantes.' }], remaining: M, ok: false };
+  const pOther = O ? otherMines / Z / O : 0;
+  for (const i of others) p[i] = pOther;
+  compRes.forEach((cr, ci) => {
+    let rest = new Float64Array([1]);
+    compRes.forEach((o, oj) => { if (oj !== ci) rest = conv(rest, o.counts); });
+    cr.vars.forEach((v, j) => {
+      let s = 0;
+      const vc = cr.vcounts[j];
+      for (let k = 0; k < vc.length; k++) {
+        if (!vc[k]) continue;
+        for (let r = 0; r < rest.length; r++) {
+          if (!rest[r]) continue;
+          const K = k + r, l = lw(K);
+          if (l === -Infinity) continue;
+          s += vc[k] * rest[r] * Math.exp(l - maxl);
+        }
+      }
+      p[v] = s / Z;
+    });
+  });
+  return { p, errors: [], remaining: M, ok: true, others: O, pOther };
+}
+
+// fallback for huge frontiers: iterative local averaging
+function approx(N, cells, total, nb, cons, covered, M, p) {
+  const dens = covered.length ? Math.max(0, M) / covered.length : 0;
+  covered.forEach(i => p[i] = dens);
+  for (let it = 0; it < 60; it++) {
+    for (const c of cons) {
+      const s = c.vars.reduce((a, v) => a + p[v], 0);
+      if (s > 0) for (const v of c.vars) p[v] = Math.min(1, p[v] * c.need / s);
+      else for (const v of c.vars) p[v] = c.need / c.vars.length;
+    }
+  }
+  return { p, errors: [], remaining: M, ok: true, approx: true };
+}
+
+
+const TEMPLATES = {"1": [0.653, 0.761, 0.935, 1.0, 0.989, 0.928, 0.772, 0.867, 1.0, 1.0, 0.0, 0.0, 0.483, 1.0, 1.0, 0.0, 0.0, 0.483, 1.0, 1.0, 0.0, 0.0, 0.483, 1.0, 1.0, 0.0, 0.0, 0.483, 1.0, 1.0, 0.0, 0.0, 0.479, 1.0, 1.0, 0.491], "2": [0.472, 0.945, 1.0, 0.873, 0.315, 0.407, 0.501, 0.529, 0.995, 0.916, 0.0, 0.0, 0.005, 0.928, 0.95, 0.0, 0.0, 0.519, 1.0, 0.542, 0.012, 0.603, 1.0, 0.609, 0.011, 0.778, 1.0, 0.797, 0.333, 0.329, 0.997, 1.0, 1.0, 1.0, 1.0, 0.698], "3": [0.659, 1.0, 0.988, 0.746, 0.177, 0.398, 0.415, 0.626, 1.0, 0.732, 0.018, 0.121, 0.426, 1.0, 0.668, 0.262, 1.0, 1.0, 0.948, 0.178, 0.026, 0.163, 0.362, 1.0, 0.846, 0.361, 0.286, 0.493, 1.0, 0.924, 0.929, 0.993, 0.946, 0.816, 0.299, 0.655], "4": [0.0, 0.018, 0.833, 1.0, 0.351, 0.0, 0.441, 1.0, 1.0, 0.357, 0.121, 0.952, 0.423, 1.0, 0.357, 0.692, 0.685, 0.143, 1.0, 0.363, 1.0, 0.854, 0.806, 1.0, 0.859, 0.679, 0.679, 0.754, 1.0, 0.816, 0.0, 0.0, 0.143, 1.0, 0.362, 0.774], "5": [0.592, 1.0, 1.0, 1.0, 0.646, 0.653, 0.804, 0.359, 0.359, 0.226, 0.713, 0.836, 0.717, 0.64, 0.125, 0.624, 0.684, 0.501, 0.917, 0.769, 0.051, 0.044, 0.0, 0.574, 0.994, 0.733, 0.571, 0.255, 0.823, 0.86, 0.429, 0.873, 0.996, 0.828, 0.224, 0.706], "6": [0.0, 0.19, 0.702, 0.976, 0.0, 0.179, 0.949, 0.847, 0.582, 0.0, 0.72, 0.932, 0.284, 0.276, 0.02, 0.948, 1.0, 0.935, 1.0, 0.673, 1.0, 0.769, 0.0, 0.573, 1.0, 0.833, 0.857, 0.245, 0.735, 0.929, 0.19, 0.827, 0.959, 0.878, 0.337, 0.731], "7": [1.0, 1.0, 1.0, 1.0, 1.0, 0.376, 0.376, 0.376, 0.879, 0.805, 0.0, 0.0, 0.263, 0.975, 0.32, 0.0, 0.009, 0.758, 0.774, 0.041, 0.0, 0.221, 0.98, 0.4, 0.0, 0.0, 0.612, 0.898, 0.098, 0.0, 0.068, 0.925, 0.635, 0.0, 0.0, 0.708], "8": [0.229, 0.832, 1.0, 0.843, 0.239, 0.766, 0.811, 0.217, 0.79, 0.769, 0.617, 0.817, 0.242, 0.801, 0.63, 0.34, 0.967, 0.854, 0.974, 0.348, 0.934, 0.603, 0.0, 0.579, 0.939, 0.903, 0.763, 0.211, 0.749, 0.904, 0.271, 0.84, 1.0, 0.845, 0.275, 0.713]};
+const COST_UNLOCK = 1500, COST_VERIFY = 10000;
+const DEFAULT_TOTAL = {8:20, 10:30, 12:45};
+const EXAMPLE = {n:10,total:30,rows:["...XXX....","...X3X....",".XDDDDDD..",".X34DD6DX.",".DX124D6D.",".D4X12DDDD","XXDD112332","X3D4321000","XD32DD2000","XDXXXD2000"]};
+const DIA_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 15l6-8h16l6 8-14 19z" fill="#ffb81c" stroke="#a85b00" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 15h28M12 7l4 8 4-8 4 8 4-8M16 15l4 19 4-19" fill="none" stroke="#ffe08a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+const X_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 9l22 22M31 9L9 31" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>';
+
+const $ = id => document.getElementById(id);
+let S = null;          // {n,total,cells:[{s,n,x,unc}], example}
+let hist = [];
+let lastRes = null, bestIdx = -1;
+let shotImg = null, shotGrid = null;
+let sheetIdx = -1;
+const lab = i => `F${Math.floor(i / S.n) + 1}C${i % S.n + 1}`;
+const fmt = v => v.toLocaleString('es-MX');
+
+function fromRows(n, total, rows, example) {
+  const cells = rows.join('').split('').map(ch => ch === '.' || ch === 'X' ? {s:'U', x: ch === 'X'} : ch === 'D' ? {s:'D'} : ch === '?' ? {s:'N', n:null} : {s:'N', n:+ch});
+  return {n, total, cells, example: !!example};
+}
+function save() { try { localStorage.setItem('radar-diamantes', JSON.stringify(S)); } catch (e) {} }
+function load() { try { const v = JSON.parse(localStorage.getItem('radar-diamantes')); if (v && v.n && v.cells && v.cells.length === v.n * v.n) return v; } catch (e) {} return null; }
+function push() { hist.push(JSON.stringify(S)); if (hist.length > 60) hist.shift(); $('undo').disabled = false; }
+
+function heat(p) {
+  const stops = [[0,[27,60,99]],[.15,[27,111,179]],[.35,[43,179,201]],[.6,[159,216,107]],[.85,[255,184,28]],[1,[255,154,28]]];
+  for (let i = 1; i < stops.length; i++) if (p <= stops[i][0]) {
+    const [a, ca] = stops[i - 1], [b, cb] = stops[i], t = (p - a) / (b - a);
+    return `rgb(${ca.map((c, k) => Math.round(c + (cb[k] - c) * t)).join(',')})`;
+  }
+  return 'rgb(255,154,28)';
+}
+
+function neighbors(i) {
+  const n = S.n, r = Math.floor(i / n), c = i % n, l = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue; const rr = r + dr, cc = c + dc;
+    if (rr >= 0 && rr < n && cc >= 0 && cc < n) l.push(rr * n + cc);
+  }
+  return l;
+}
+
+function compute() {
+  const cells = S.cells.map(c => c.s === 'N' && c.n == null ? {s:'N', n:null} : c);
+  // numbers with unknown value act as revealed without constraint
+  const solverCells = cells.map(c => c.s === 'N' && c.n == null ? {s:'Q'} : c);
+  lastRes = solveBoard(S.n, solverCells, S.total);
+}
+
+function render() {
+  compute();
+  const n = S.n, res = lastRes, P = res.p;
+  const board = $('board');
+  board.style.setProperty('--n', n); $('cols').style.setProperty('--n', n); $('rows').style.setProperty('--n', n);
+  $('cols').innerHTML = Array.from({length:n}, (_, i) => `<span>C${i + 1}</span>`).join('');
+  $('rows').innerHTML = Array.from({length:n}, (_, i) => `<span>F${i + 1}</span>`).join('');
+  const covered = S.cells.map((c, i) => c.s === 'U' ? i : -1).filter(i => i >= 0);
+  const errCells = new Set((res.errors || []).map(e => e.cell));
+  // decide best
+  bestIdx = -1;
+  const sureD = [], sureE = [], badX = [], betX = [];
+  if (res.ok) {
+    for (const i of covered) {
+      const p = P[i];
+      if (p > 0.9995) { sureD.push(i); if (S.cells[i].x) badX.push(i); }
+      else if (p < 0.0005) { if (!S.cells[i].x) sureE.push(i); }
+      else if (S.cells[i].x) betX.push(i);
+    }
+    let best = -1, bp = -1, bInfo = -1;
+    for (const i of covered) {
+      const p = P[i];
+      if (p < 0.0005) continue;
+      const info = neighbors(i).filter(j => S.cells[j].s === 'U').length;
+      if (p > bp + 1e-9 || (Math.abs(p - bp) <= 1e-9 && info > bInfo)) { best = i; bp = p; bInfo = info; }
+    }
+    bestIdx = best;
+  }
+  const frag = [];
+  S.cells.forEach((c, i) => {
+    let cls = 'cell', inner = '', style = '', aria = lab(i);
+    if (c.s === 'U') {
+      const p = P[i];
+      if (res.ok && !isNaN(p)) {
+        const pc = p > 0.9995 ? 100 : p < 0.0005 ? 0 : Math.max(1, Math.min(99, Math.round(p * 100)));
+        if (p > 0.9995) cls += ' sure'; else if (p < 0.0005) cls += ' safe'; else style = `--heat:${heat(p)}`;
+        inner = `<span class="pv">${pc}%</span>`;
+        aria += `, tapada, ${pc}% de diamante`;
+        if (c.x && p >= 0.0005) cls += ' warn';
+      } else inner = '';
+      if (c.x) { inner = `<span class="xm">${X_SVG}</span>` + inner; aria += ', marcada con X'; }
+      if (i === bestIdx) cls += ' best';
+    } else if (c.s === 'D') { cls += ' dia'; inner = DIA_SVG; aria += ', diamante'; }
+    else {
+      cls += ' open';
+      if (c.n == null) { cls += ' q'; inner = '?'; aria += ', número sin leer'; }
+      else { if (c.n === 0) cls += ' z'; inner = c.n; aria += `, número ${c.n}`; }
+      if (c.unc) cls += ' uncertain';
+    }
+    if (errCells.has(i)) cls += ' err';
+    frag.push(`<button type="button" class="${cls}" style="${style}" data-i="${i}" aria-label="${aria}">${inner}</button>`);
+  });
+  board.innerHTML = frag.join('');
+
+  // stats
+  const found = S.cells.filter(c => c.s === 'D').length;
+  const left = S.total - found;
+  $('sLeft').textContent = left < 0 ? '!' : left;
+  $('sUnk').textContent = res.ok ? covered.filter(i => P[i] >= 0.0005 && P[i] <= 0.9995).length : '–';
+  $('total').value = S.total;
+  $('exampleNote').hidden = !S.example;
+
+  // errors
+  const eb = $('errBox');
+  if (res.errors && res.errors.length) {
+    eb.hidden = false;
+    eb.innerHTML = '<b>Algo no cuadra.</b> ' + res.errors.map(e => e.cell >= 0 ? `El número de ${lab(e.cell)} ${e.msg}.` : e.msg + '.').join(' ') + ' Toca la casilla marcada en rojo para corregirla.';
+  } else eb.hidden = true;
+  const unc = S.cells.map((c, i) => (c.s === 'N' && (c.n == null || c.unc)) ? i : -1).filter(i => i >= 0);
+  $('uncBox').hidden = !unc.length;
+  if (unc.length) $('uncBox').innerHTML = `<b>Revisa ${unc.length === 1 ? 'esta casilla' : 'estas ' + unc.length + ' casillas'}:</b> ${unc.map(lab).join(', ')}. No estoy seguro de haber leído bien el número.`;
+
+  // sonar
+  const tips = [];
+  let move = '', why = '';
+  if (!res.ok) { move = 'Corrige el tablero'; why = 'Con un número mal leído no puedo calcular. Revisa la casilla en rojo o el total de diamantes.'; }
+  else if (left <= 0) { move = '¡Mapa completo!'; why = 'Ya encontraste todos los diamantes. Todo lo tapado está vacío.'; }
+  else if (sureD.length) {
+    move = `Desbloquea ${lab(sureD[0])} <span class="pct">100%</span>`;
+    why = sureD.length > 1 ? `Hay ${sureD.length} diamantes seguros: ${sureD.map(lab).join(', ')}.` : 'Es un diamante seguro según los números y el total de diamantes del mapa.';
+  } else if (bestIdx >= 0) {
+    const bp = P[bestIdx], blind = COST_UNLOCK / bp;
+    const cand = covered.filter(i => P[i] >= 0.0005 && P[i] <= 0.9995);
+    const verifyBetter = blind > COST_VERIFY + COST_UNLOCK;
+    move = `Desbloquea ${lab(bestIdx)} <span class="pct">${Math.round(bp * 100)}%</span>`;
+    why = `Es la casilla con más probabilidad de diamante. A este ritmo, cada diamante te cuesta unas ${fmt(Math.round(blind / 500) * 500)} monedas.`;
+    if (verifyBetter) {
+      tips.push(['var(--violet)', `<b>Mejor usa la verificación:</b> marca X en las ${cand.length} casillas sin resolver y verifica (${fmt(COST_VERIFY)}). Te señala un diamante seguro: ${fmt(COST_VERIFY + COST_UNLOCK)} en total, contra ~${fmt(Math.round(blind / 500) * 500)} adivinando.`]);
+    }
+    // info move: safe cell that reveals most unresolved neighbors
+    if (bp < 0.6) {
+      let bi = -1, bc = 0;
+      for (const i of covered) {
+        if (P[i] >= 0.0005) continue;
+        const k = neighbors(i).filter(j => S.cells[j].s === 'U' && P[j] >= 0.0005 && P[j] <= 0.9995).length;
+        if (k > bc) { bc = k; bi = i; }
+      }
+      if (bi >= 0 && bc >= 2) tips.push(['var(--aqua)', `<b>Para información:</b> ${lab(bi)} está vacía seguro. Si pagas sus ${fmt(COST_UNLOCK)}, su número aclara ${bc} casillas vecinas.`]);
+    }
+  }
+  if (res.ok && sureE.length) tips.push(['#6f8fb3', `<b>Marca X gratis</b> en ${sureE.length > 6 ? sureE.length + ' casillas grises' : sureE.map(lab).join(', ')}: vacías seguras.`]);
+  if (badX.length) tips.push(['var(--coral)', `<b>Quita la X</b> de ${badX.map(lab).join(', ')}: ahí hay diamante seguro.`]);
+  if (betX.length) tips.push(['var(--coral)', `<b>X sin comprobar</b> en ${betX.map(lab).join(', ')}. Ningún número la respalda; no confíes en ella.`]);
+  if (res.approx) tips.push(['var(--mist)', 'Tablero muy abierto: los porcentajes son una estimación aproximada.']);
+  $('move').innerHTML = move; $('why').textContent = why;
+  $('tips').innerHTML = tips.map(([c, t]) => `<li><span class="dot" style="background:${c}"></span><span>${t}</span></li>`).join('');
+  renderSizes(); save();
+}
+
+function renderSizes() {
+  $('sizes').innerHTML = [8, 10, 12].map(k => `<button type="button" class="chip" aria-pressed="${S.n === k}" data-n="${k}">${k}×${k}</button>`).join('');
+}
+
+// ---------- sheet ----------
+function openSheet(i) {
+  sheetIdx = i; const c = S.cells[i], p = lastRes && lastRes.p[i];
+  $('shTitle').textContent = lab(i);
+  $('shPct').textContent = c.s === 'U' && lastRes.ok && !isNaN(p) ? `${Math.round(p * 100)}% diamante` : '';
+  $('shQ').textContent = c.s === 'U' ? '¿Qué salió al desbloquearla?' : 'Corrige lo que muestra esta casilla.';
+  $('shX').textContent = c.s === 'U' && c.x ? 'Quitar X' : 'Marcar X';
+  $('shX').hidden = c.s !== 'U';
+  $('shCover').hidden = c.s === 'U';
+  $('pad').innerHTML = `<button type="button" class="key dk" data-v="D">${DIA_SVG}Diamante</button>` +
+    [0,1,2,3,4,5,6,7,8].map(v => `<button type="button" class="key" data-v="${v}">${v}</button>`).join('');
+  $('scrim').hidden = false; $('sheet').hidden = false;
+  $('pad').querySelector('.key').focus();
+}
+function closeSheet() { $('scrim').hidden = true; $('sheet').hidden = true; const b = document.querySelector(`.cell[data-i="${sheetIdx}"]`); b && b.focus(); sheetIdx = -1; }
+function setCell(v) {
+  const i = sheetIdx; if (i < 0) return; push();
+  const c = S.cells[i];
+  if (v === 'D') S.cells[i] = {s:'D'};
+  else if (v === 'U') S.cells[i] = {s:'U', x:false};
+  else if (v === 'X') S.cells[i] = {s:'U', x:!c.x};
+  else S.cells[i] = {s:'N', n:+v};
+  S.example = false;
+  closeSheet(); render();
+}
+$('pad').addEventListener('click', e => { const b = e.target.closest('.key'); if (b) setCell(b.dataset.v); });
+$('shX').onclick = () => setCell('X');
+$('shCover').onclick = () => setCell('U');
+$('scrim').onclick = closeSheet;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+$('board').addEventListener('click', e => { const b = e.target.closest('.cell'); if (b) openSheet(+b.dataset.i); });
+$('undo').onclick = () => { if (!hist.length) return; S = JSON.parse(hist.pop()); $('undo').disabled = !hist.length; render(); };
+const setTotal = v => { v = Math.max(1, Math.min(S.n * S.n, v | 0)); if (v !== S.total) { push(); S.total = v; render(); } else $('total').value = S.total; };
+$('tMinus').onclick = () => setTotal(S.total - 1);
+$('tPlus').onclick = () => setTotal(S.total + 1);
+$('total').addEventListener('change', e => setTotal(+e.target.value));
+$('sizes').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return; const k = +b.dataset.n;
+  push();
+  if (shotImg) analyze(shotImg, k);
+  else { S = {n:k, total:DEFAULT_TOTAL[k], cells:Array.from({length:k * k}, () => ({s:'U', x:false})), example:false}; render(); }
+});
+
+let toastT;
+function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2600); }
+
+// ---------- image analysis ----------
+function smooth(P) { const o = new Float64Array(P.length); for (let i = 0; i < P.length; i++) { let s = 0, k = 0; for (let j = i - 1; j <= i + 1; j++) if (j >= 0 && j < P.length) { s += P[j]; k++; } o[i] = s / k; } return o; }
+function periodic(P, L, N, cMin, cMax, x0Min, x0Max, cStep, xStep) {
+  let best = null;
+  for (let c = cMin; c <= cMax; c += cStep) {
+    const span = N * c; if (span > L - 1) continue;
+    for (let x0 = Math.max(0, x0Min); x0 <= Math.min(L - 1 - span, x0Max); x0 += xStep) {
+      let sc = 0;
+      for (let k = 0; k < N; k++) {
+        const a = P[Math.floor(x0 + k * c)], b = P[Math.floor(x0 + (k + 1) * c)], m = P[Math.floor(x0 + (k + .5) * c)];
+        sc += m - (a + b) / 2;
+      }
+      sc /= N;
+      if (!best || sc > best.sc) best = {sc, c, x0};
+    }
+  }
+  return best;
+}
+function detectGrid(img, forceN) {
+  const f = Math.min(1, 360 / img.width);
+  const w = Math.round(img.width * f), h = Math.round(img.height * f);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', {willReadFrequently:true}); cx.drawImage(img, 0, 0, w, h);
+  const d = cx.getImageData(0, 0, w, h).data;
+  const S_ = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) S_[i] = d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2];
+  const colProf = (y0, y1) => { const P = new Float64Array(w); for (let x = 0; x < w; x++) { let s = 0; for (let y = y0; y < y1; y++) s += S_[y * w + x]; P[x] = s / Math.max(1, y1 - y0); } return smooth(P); };
+  const rowProf = (x0, x1) => { const P = new Float64Array(h); for (let y = 0; y < h; y++) { let s = 0; for (let x = x0; x < x1; x++) s += S_[y * w + x]; P[y] = s / Math.max(1, x1 - x0); } return smooth(P); };
+  const Px = colProf(0, h);
+  let N, c, x0;
+  if (forceN) {
+    const b = periodic(Px, w, forceN, w * .05, w * .125, 0, w, .5, 1); N = forceN; c = b.c; x0 = b.x0;
+  } else {
+    const b = periodic(Px, w, 8, w * .05, w * .125, 0, w, .5, 1); c = b.c; x0 = b.x0;
+    const con = k => { const a = x0 + k * c, e = x0 + (k + 1) * c; if (a < 0 || e > w - 1) return -1e9; return Px[Math.floor(x0 + (k + .5) * c)] - (Px[Math.floor(a)] + Px[Math.floor(e)]) / 2; };
+    const base = [0,1,2,3,4,5,6,7].map(con).sort((a, b) => a - b)[4];
+    let lo = 0, hi = 8;
+    while (con(lo - 1) > .35 * base) lo--;
+    while (con(hi) > .35 * base) hi++;
+    const cnt = hi - lo;
+    N = [8, 10, 12].sort((a, b) => Math.abs(a - cnt) - Math.abs(b - cnt) || b - a)[0];
+    x0 = x0 + lo * c;
+  }
+  const Py = rowProf(Math.floor(x0), Math.floor(x0 + N * c));
+  const by = periodic(Py, h, N, c * .97, c * 1.03, 0, h, .25, 1);
+  const Px2 = colProf(Math.floor(by.x0), Math.floor(by.x0 + N * by.c));
+  const bx = periodic(Px2, w, N, c * .97, c * 1.03, x0 - 10, x0 + 10, .25, .5);
+  return {N, x0: bx.x0 / f, y0: by.x0 / f, cx: bx.c / f, cy: by.c / f};
+}
+function zones(mask, W, H) {
+  let x0 = W, y0 = H, x1 = -1, y1 = -1, cnt = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (mask[y * W + x]) { cnt++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (cnt < 10) return null;
+  const w = x1 - x0 + 1, h = y1 - y0 + 1, GW = 5, GH = 7, z = [];
+  for (let i = 0; i < GH; i++) for (let j = 0; j < GW; j++) {
+    const ya = y0 + Math.floor(i * h / GH), yb = Math.max(y0 + Math.floor((i + 1) * h / GH), ya + 1);
+    const xa = x0 + Math.floor(j * w / GW), xb = Math.max(x0 + Math.floor((j + 1) * w / GW), xa + 1);
+    let s = 0, k = 0; for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) { s += mask[y * W + x]; k++; }
+    z.push(s / k);
+  }
+  z.push(w / h); return z;
+}
+function classify(img, g) {
+  const scale = Math.min(1, 900 / img.width);
+  const W = Math.round(img.width * scale), H = Math.round(img.height * scale);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d', {willReadFrequently:true}); cx.drawImage(img, 0, 0, W, H);
+  const out = [];
+  for (let r = 0; r < g.N; r++) for (let c = 0; c < g.N; c++) {
+    const X = (g.x0 + c * g.cx) * scale, Y = (g.y0 + r * g.cy) * scale, CW = g.cx * scale, CH = g.cy * scale;
+    const ix = Math.round(X + .1 * CW), iy = Math.round(Y + .1 * CH), iw = Math.max(4, Math.round(.8 * CW)), ih = Math.max(4, Math.round(.8 * CH));
+    const d = cx.getImageData(ix, iy, iw, ih).data;
+    let gold = 0, cyan = 0, white = 0, grey = 0, inner = 0;
+    const mask = new Uint8Array(iw * ih);
+    for (let y = 0; y < ih; y++) for (let x = 0; x < iw; x++) {
+      const k = (y * iw + x) * 4, R = d[k], G = d[k + 1], B = d[k + 2];
+      const isWhite = R > 200 && G > 200 && B > 200;
+      mask[y * iw + x] = isWhite ? 1 : 0;
+      // the inner 0.15 inset region for type features
+      if (x >= iw * .0625 && x < iw * .9375 && y >= ih * .0625 && y < ih * .9375) {
+        inner++;
+        if (R > 180 && G > 70 && B < 100 && R > G) gold++;
+        if (B > 170 && R < 120 && G > 90) cyan++;
+        if (R > 200 && G > 220 && B > 220) white++;
+        if (Math.abs(R - G) < 12 && Math.abs(G - B) < 12 && R > 40 && R < 160) grey++;
+      }
+    }
+    gold /= inner; cyan /= inner; white /= inner; grey /= inner;
+    if (gold > .2) out.push({s:'D'});
+    else if (cyan > .45) out.push({s:'U', x: cyan < .9 || white > .05});
+    else if (grey > .07 && white < .03) out.push({s:'N', n:0});
+    else if (white > .02) {
+      const z = zones(mask, iw, ih);
+      if (!z) { out.push({s:'N', n:null}); continue; }
+      let best = null, second = Infinity;
+      for (const [dg, t] of Object.entries(TEMPLATES)) {
+        let s = 0; for (let q = 0; q < t.length; q++) s += Math.abs(t[q] - z[q]);
+        if (!best || s < best.s) { if (best) second = Math.min(second, best.s); best = {dg, s}; } else second = Math.min(second, s);
+      }
+      out.push({s:'N', n:+best.dg, unc: (second - best.s) < 3});
+    } else out.push({s:'N', n:null});
+  }
+  return out;
+}
+function drawShot() {
+  if (!shotImg) return;
+  const cv = $('shotCanvas'), sc = Math.min(1, 720 / shotImg.width);
+  cv.width = Math.round(shotImg.width * sc); cv.height = Math.round(shotImg.height * sc);
+  const c = cv.getContext('2d'); c.drawImage(shotImg, 0, 0, cv.width, cv.height);
+  const g = shotGrid; if (!g) return;
+  c.strokeStyle = '#c46bff'; c.lineWidth = 2;
+  for (let k = 0; k <= g.N; k++) {
+    c.beginPath(); c.moveTo((g.x0 + k * g.cx) * sc, g.y0 * sc); c.lineTo((g.x0 + k * g.cx) * sc, (g.y0 + g.N * g.cy) * sc); c.stroke();
+    c.beginPath(); c.moveTo(g.x0 * sc, (g.y0 + k * g.cy) * sc); c.lineTo((g.x0 + g.N * g.cx) * sc, (g.y0 + k * g.cy) * sc); c.stroke();
+  }
+}
+function analyze(img, forceN) {
+  try {
+    const g = detectGrid(img, forceN);
+    shotGrid = g;
+    const cells = classify(img, g);
+    S = {n:g.N, total:DEFAULT_TOTAL[g.N], cells, example:false};
+    $('toggleShot').hidden = false;
+    drawShot(); render();
+    toast(`Leí un tablero de ${g.N}×${g.N} con ${DEFAULT_TOTAL[g.N]} diamantes. Revisa que coincida.`);
+  } catch (e) {
+    console.error(e); toast('No pude leer la captura. Prueba con una captura completa del tablero.');
+  }
+}
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) { toast('Ese archivo no es una imagen.'); return; }
+  lastFile = file;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => { shotImg = img; if (S) push(); analyze(img); };
+  img.onerror = () => toast('No pude abrir esa imagen.');
+  img.src = url;
+}
+let lastFile = null;
+$('file').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => loadFile(e.dataTransfer.files[0]));
+document.addEventListener('paste', e => { const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) loadFile(it.getAsFile()); });
+$('toggleShot').onclick = () => { const s = $('shot'); s.hidden = !s.hidden; $('toggleShot').textContent = s.hidden ? 'Ver captura' : 'Ocultar captura'; if (!s.hidden) drawShot(); };
+
+S = load() || fromRows(EXAMPLE.n, EXAMPLE.total, EXAMPLE.rows, true);
+render();
+</script>
+
+</body></html>
